@@ -17,11 +17,12 @@ def record(self, web_video, dump_file):
     output = av.open(dump_file, 'w')
 
     io_map = {}
-    # Dump streams info
+    # copy meta info
     for stream in input_.streams:
         print(stream)
         io_map[stream] = output.add_stream(template=stream)
 
+    # remux packets
     for packet in input_.demux(streams=tuple(input_.streams)):
         if packet.dts is None:
             continue
