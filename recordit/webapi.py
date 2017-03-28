@@ -21,8 +21,8 @@ class Base(_Base):
 @registerSchema('recording')
 class Recording(Base):
     __tablename__ = 'recording'
-    name = Column(String(40))
-    uri = Column(String(400))
+    name = Column(String(40), nullable=False, unique=True)
+    url = Column(String(400), nullable=False)
 
 
 def create_app():
