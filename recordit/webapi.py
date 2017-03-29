@@ -7,6 +7,7 @@ from eve_sqlalchemy import SQL
 from sqlalchemy import Column, DateTime, String, Integer, func
 from sqlalchemy.ext.declarative import declarative_base
 from eve_sqlalchemy.decorators import registerSchema
+from eve_sqlalchemy.validation import ValidatorSQL
 from celery.contrib.abortable import AbortableAsyncResult
 
 from .record import record
@@ -76,7 +77,7 @@ def create_app():
         'IF_MATCH': False,
     }
 
-    app = Eve(settings=eve_settings, data=SQL)
+    app = Eve(settings=eve_settings, data=SQL, validator=ValidatorSQL)
 
     # bind SQLAlchemy
     db = app.data.driver
