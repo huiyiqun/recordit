@@ -1,6 +1,6 @@
 from os import path
 from flask import current_app
-from sqlalchemy import Column, DateTime, String, Integer, func
+from sqlalchemy import Column, DateTime, String, Integer, func, event
 from sqlalchemy.ext.declarative import declarative_base
 from eve_sqlalchemy.decorators import registerSchema
 from celery.contrib.abortable import AbortableAsyncResult
@@ -29,19 +29,22 @@ class Recording(Base):
 
 
 # hooks for db operations
-def start_to_record(recordings):
-    for r in recordings:
-        current_app.logger.debug(r['url'])
-        # TODO: check name
-        result = record.delay(r['url'], path.join('.', r['name']+'.mp4'))
-        # XXX: maybe we should be decoupled with eve_sqlalchemy
-        current_app.data.update(
-            'recording', r['_id'], {'_task': str(result)}, None)
-
-
-def stop_recording(recording):
+@event.listens_for(Recording, 'before_insert', retval=True)
+def start_to_record(mapper, connection, recording):
     current_app.logger.debug(recording)
-    task_id = recording['_task']
+    # TODO: check name
+    result = record.delay(
+        recording.url, path.join('.', recording.name+'.mp4'))
+    # XXX: maybe we should be decoupled with eve_sqlalchemy
+    recording._task = str(result)
+
+    return recording
+
+
+@event.listens_for(Recording, 'after_delete')
+def stop_recording(mapper, connection, recording):
+    current_app.logger.debug(recording)
+    task_id = recording._task
     if task_id is not None:
-        result = AbortableAsyncResult(recording['_task'])
+        result = AbortableAsyncResult(recording._task)
         result.abort()
