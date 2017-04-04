@@ -30,22 +30,17 @@ class Recording(Base):
 
 
 # hooks for db operations
-@event.listens_for(Recording, 'before_insert', retval=True)
-def start_to_record(mapper, connection, recording):
-    current_app.logger.debug(recording)
-    # TODO: check name
-    result = record.delay(
-        recording.url, path.join('.', recording.name+'.mp4'))
-    # XXX: maybe we should be decoupled with eve_sqlalchemy
-    recording._task = str(result)
-
-    return recording
-
-
-@event.listens_for(Recording, 'after_delete')
-def stop_recording(mapper, connection, recording):
-    current_app.logger.debug(recording)
-    task_id = recording._task
-    if task_id is not None:
-        result = AbortableAsyncResult(recording._task)
-        result.abort()
+@event.listens_for(Recording._deleted, 'set')
+def start_or_stop_recording(recording, deleted, old_value, initiator):
+    print(recording, deleted, old_value, initiator)
+    current_app.logger.debug('%s: %s' % (
+        'STOP' if deleted else 'START', recording))
+    if deleted:
+        task_id = recording._task
+        if task_id is not None:
+            result = AbortableAsyncResult(recording._task)
+            result.abort()
+    else:
+        result = record.delay(
+            recording.url, path.join('.', recording.name+'.mp4'))
+        recording._task = str(result)
