@@ -3,8 +3,13 @@ import os
 from eve import Eve
 from eve_sqlalchemy import SQL
 from eve_sqlalchemy.validation import ValidatorSQL
+from celery.contrib.abortable import AbortableAsyncResult
 
 from .model import Base, Recording
+
+
+def query_task_status(response):
+    response['state'] = AbortableAsyncResult(response['_task']).state
 
 
 def create_app():
@@ -43,6 +48,8 @@ def create_app():
 
     # try to create all tables
     db.create_all()
+
+    app.on_fetched_item_recording = query_task_status
 
     return app
 
