@@ -21,6 +21,7 @@ def create_app():
                 **Recording._eve_schema['recording'],
                 'resource_methods': ['GET', 'POST'],
                 'item_methods': ['GET', 'DELETE'],
+                'soft_delete': True,
             },
         },
 

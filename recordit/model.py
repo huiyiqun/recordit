@@ -1,6 +1,6 @@
 from os import path
 from flask import current_app
-from sqlalchemy import Column, DateTime, String, Integer, func, event
+from sqlalchemy import Column, DateTime, Boolean, String, Integer, func, event
 from sqlalchemy.ext.declarative import declarative_base
 from eve_sqlalchemy.decorators import registerSchema
 from celery.contrib.abortable import AbortableAsyncResult
@@ -18,6 +18,7 @@ class Base(_Base):
     _created = Column(DateTime, default=func.now())
     _updated = Column(DateTime, default=func.now(), onupdate=func.now())
     _etag = Column(String(40))
+    _deleted = Column(Boolean())
 
 
 @registerSchema('recording')
