@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from eve_sqlalchemy.decorators import registerSchema
 from celery.contrib.abortable import AbortableAsyncResult
 
-from .record import record
+from .worker import record
 
 
 _Base = declarative_base()
