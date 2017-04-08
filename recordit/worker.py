@@ -9,10 +9,15 @@ from celery.utils.log import get_task_logger
 app = Celery(__name__,
              backend='redis://localhost/',
              broker='redis://localhost/')
+
+app.conf.update(
+    accept_content=['pickle', 'json'],
+)
+
 logger = get_task_logger(__name__)
 
 
-@app.task(bind=True, base=AbortableTask, acks_late=True)
+@app.task(bind=True, base=AbortableTask, acks_late=True, serializer='pickle')
 def record(self, web_video, dump_file, until=None):
     input_ = av.open(web_video)
     output = av.open(dump_file, 'w')
