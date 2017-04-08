@@ -56,9 +56,15 @@ class Recording(Base):
         '''
         now = datetime.utcnow()
 
+        # no repeat, so start_time is always this.start
+        if self.interval is None:
+            return self.start
+
+        duration = self.duration or 0
+
         # now - start < self.duration
         k = math.ceil(
-            ((now - self.start).total_seconds() - self.duration)
+            ((now - self.start).total_seconds() - duration)
             / self.interval)
         # k is a non-negative
         k = max(k, 0)
