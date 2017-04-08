@@ -6,6 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from eve_sqlalchemy.decorators import registerSchema
 from celery.contrib.abortable import AbortableAsyncResult
 
+from .worker import record
+
 
 _Base = declarative_base()
 
@@ -72,7 +74,20 @@ class Recording(Base):
         return self.start + k * timedelta(seconds=self.interval)
 
 
-@event.listens_for(Recording, 'after_insert')
+@event.listens_for(Recording, 'before_insert')
 def add_task(mapper, connection, target):
-    start_time = target.next_start_time()
-    print(start_time)
+    # There is a subtle race-condition
+    if target.duration is None:
+        start_time = target.start
+    else:
+        start_time = target.next_start_time()
+
+    kwargs = {
+        'web_video': target.url,
+        'dump_file': f'{target.name}-{start_time}.mp4',
+    }
+    if target.duration is not None:
+        kwargs['until'] = start_time + timedelta(seconds=target.duration)
+
+    result = record.apply_async(kwargs=kwargs, eta=start_time)
+    target._task = result.id
