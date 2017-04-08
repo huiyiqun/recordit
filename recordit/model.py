@@ -1,6 +1,7 @@
 from sqlalchemy import Column, DateTime, String, Integer, func
 from sqlalchemy.ext.declarative import declarative_base
 from eve_sqlalchemy.decorators import registerSchema
+from celery.contrib.abortable import AbortableAsyncResult
 
 
 _Base = declarative_base()
@@ -28,3 +29,17 @@ class Recording(Base):
     duration = Column(Integer)
     # interval seconds between start time of multiple recordings, not to repeat if null
     interval = Column(Integer)
+
+    @classmethod
+    def from_dict(cls, obj: dict):
+        ret = cls()
+        for key, val in obj.items():
+            try:
+                setattr(ret, key, val)
+            except:
+                pass
+        return ret
+
+    def result(self):
+        if self._task is not None:
+            return AbortableAsyncResult(self._task)

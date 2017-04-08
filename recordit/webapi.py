@@ -9,7 +9,7 @@ from .model import Base, Recording
 
 
 def query_task_status(response):
-    response['state'] = AbortableAsyncResult(response['_task']).state
+    response['result'] = Recording.from_dict(response).result()
 
 
 def create_app():
