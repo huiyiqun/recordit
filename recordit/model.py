@@ -1,4 +1,7 @@
-from sqlalchemy import Column, DateTime, String, Integer, func
+import math
+
+from datetime import datetime, timedelta
+from sqlalchemy import Column, DateTime, String, Integer, func, event
 from sqlalchemy.ext.declarative import declarative_base
 from eve_sqlalchemy.decorators import registerSchema
 from celery.contrib.abortable import AbortableAsyncResult
@@ -27,7 +30,8 @@ class Recording(Base):
     start = Column(DateTime, default=func.now())
     # total seconds to record, infinite if null
     duration = Column(Integer)
-    # interval seconds between start time of multiple recordings, not to repeat if null
+    # interval seconds between start time of multiple recordings,
+    # not to repeat if null
     interval = Column(Integer)
 
     @classmethod
@@ -43,3 +47,26 @@ class Recording(Base):
     def result(self):
         if self._task is not None:
             return AbortableAsyncResult(self._task)
+
+    def next_start_time(self):
+        '''
+        find the least `start` that:
+        1. now - start < self.duration
+        2. start = self.start + k * self.interval (k is a non-negative integer)
+        '''
+        now = datetime.utcnow()
+
+        # now - start < self.duration
+        k = math.ceil(
+            ((now - self.start).total_seconds() - self.duration)
+            / self.interval)
+        # k is a non-negative
+        k = max(k, 0)
+
+        return self.start + k * timedelta(seconds=self.interval)
+
+
+@event.listens_for(Recording, 'after_insert')
+def add_task(mapper, connection, target):
+    start_time = target.next_start_time()
+    print(start_time)
