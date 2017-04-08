@@ -1,5 +1,6 @@
 import av
 
+from datetime import datetime
 from celery import Celery
 from celery.contrib.abortable import AbortableTask
 from celery.utils.log import get_task_logger
@@ -12,7 +13,7 @@ logger = get_task_logger(__name__)
 
 
 @app.task(bind=True, base=AbortableTask)
-def record(self, web_video, dump_file):
+def record(self, web_video, dump_file, until=None):
     input_ = av.open(web_video)
     output = av.open(dump_file, 'w')
 
@@ -29,6 +30,12 @@ def record(self, web_video, dump_file):
 
         packet.stream = io_map[packet.stream]
         output.mux(packet)
+
+        # time out
+        if until is not None and datetime.utcnow() > until:
+            break
+
+        # aborted
         if self.is_aborted():
             break
 
