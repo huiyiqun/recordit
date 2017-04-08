@@ -3,7 +3,6 @@ import os
 from eve import Eve
 from eve_sqlalchemy import SQL
 from eve_sqlalchemy.validation import ValidatorSQL
-from celery.contrib.abortable import AbortableAsyncResult
 
 from .model import Base, Recording
 
