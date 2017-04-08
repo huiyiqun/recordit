@@ -18,6 +18,13 @@ class Base(_Base):
 @registerSchema('recording')
 class Recording(Base):
     __tablename__ = 'recording'
+    # task id, used to query task status
+    _task = Column(String(36))
     name = Column(String(40), nullable=False, unique=True)
     url = Column(String(400), nullable=False)
-    _task = Column(String(36))
+    # time to start recording at the first time, immediately if null
+    start = Column(DateTime, default=func.now())
+    # total seconds to record, infinite if null
+    duration = Column(Integer)
+    # interval seconds between start time of multiple recordings, not to repeat if null
+    interval = Column(Integer)
