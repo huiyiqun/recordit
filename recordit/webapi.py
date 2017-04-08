@@ -8,7 +8,9 @@ from .model import Base, Recording
 
 
 def query_task_status(response):
-    response['result'] = Recording.from_dict(response).result()
+    result = Recording.from_dict(response).result()
+    if result is not None:
+        response['state'] = result.state
 
 
 def create_app():
