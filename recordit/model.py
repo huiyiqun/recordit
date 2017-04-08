@@ -32,7 +32,6 @@ class Recording(Base):
 # hooks for db operations
 @event.listens_for(Recording._deleted, 'set')
 def start_or_stop_recording(recording, deleted, old_value, initiator):
-    print(recording, deleted, old_value, initiator)
     current_app.logger.debug('%s: %s' % (
         'STOP' if deleted else 'START', recording))
     if deleted:
