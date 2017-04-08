@@ -12,7 +12,7 @@ app = Celery(__name__,
 logger = get_task_logger(__name__)
 
 
-@app.task(bind=True, base=AbortableTask)
+@app.task(bind=True, base=AbortableTask, acks_late=True)
 def record(self, web_video, dump_file, until=None):
     input_ = av.open(web_video)
     output = av.open(dump_file, 'w')
