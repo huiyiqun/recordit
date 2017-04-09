@@ -58,29 +58,31 @@ class Recording(Base):
         '''
         now = datetime.utcnow()
 
+        # check whether self.start has been initialized
+        if isinstance(self.start, datetime):
+            start = self.start
+        else:
+            start = now
+
         # no repeat, so start_time is always this.start
         if self.interval is None:
-            return self.start
+            return start
 
         duration = self.duration or 0
 
         # now - start < self.duration
         k = math.ceil(
-            ((now - self.start).total_seconds() - duration)
+            ((now - start).total_seconds() - duration)
             / self.interval)
         # k is a non-negative
         k = max(k, 0)
 
-        return self.start + k * timedelta(seconds=self.interval)
+        return start + k * timedelta(seconds=self.interval)
 
 
 @event.listens_for(Recording, 'before_insert')
 def add_task(mapper, connection, target):
-    # There is a subtle race-condition
-    if target.duration is None:
-        start_time = target.start
-    else:
-        start_time = target.next_start_time()
+    start_time = target.next_start_time()
 
     kwargs = {
         'web_video': target.url,
