@@ -1,9 +1,12 @@
 import av
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import event
 from celery import Celery
 from celery.contrib.abortable import AbortableTask
 from celery.utils.log import get_task_logger
+
+from .model import Recording
 
 # TODO: configurable
 app = Celery(__name__,
@@ -46,3 +49,18 @@ def record(self, web_video, dump_file, until=None):
 
     logger.info(f'{web_video} is dumped to {dump_file}')
     output.close()
+
+
+@event.listens_for(Recording, 'before_insert')
+def add_task(mapper, connection, target):
+    start_time = target.next_start_time()
+
+    kwargs = {
+        'web_video': target.url,
+        'dump_file': f'{target.name}-{start_time}.mp4',
+    }
+    if target.duration is not None:
+        kwargs['until'] = start_time + timedelta(seconds=target.duration)
+
+    result = record.apply_async(kwargs=kwargs, eta=start_time)
+    target._task = result.id

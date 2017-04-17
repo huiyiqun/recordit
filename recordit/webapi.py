@@ -7,6 +7,9 @@ from eve_sqlalchemy.validation import ValidatorSQL
 from .model import Base, Recording
 from .config import Config
 
+# enable hooks of Recording
+from . import worker
+
 
 def query_task_status(response):
     result = Recording.from_dict(response).result()

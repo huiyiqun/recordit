@@ -1,12 +1,10 @@
 import math
 
 from datetime import datetime, timedelta
-from sqlalchemy import Column, DateTime, String, Integer, func, event
+from sqlalchemy import Column, DateTime, String, Integer, func
 from sqlalchemy.ext.declarative import declarative_base
 from eve_sqlalchemy.decorators import registerSchema
 from celery.contrib.abortable import AbortableAsyncResult
-
-from .worker import record
 
 
 _Base = declarative_base()
@@ -78,18 +76,3 @@ class Recording(Base):
         k = max(k, 0)
 
         return start + k * timedelta(seconds=self.interval)
-
-
-@event.listens_for(Recording, 'before_insert')
-def add_task(mapper, connection, target):
-    start_time = target.next_start_time()
-
-    kwargs = {
-        'web_video': target.url,
-        'dump_file': f'{target.name}-{start_time}.mp4',
-    }
-    if target.duration is not None:
-        kwargs['until'] = start_time + timedelta(seconds=target.duration)
-
-    result = record.apply_async(kwargs=kwargs, eta=start_time)
-    target._task = result.id
