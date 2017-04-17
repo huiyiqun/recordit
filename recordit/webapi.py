@@ -1,5 +1,3 @@
-import os
-
 from eve import Eve
 from eve_sqlalchemy import SQL
 from eve_sqlalchemy.validation import ValidatorSQL
@@ -8,7 +6,7 @@ from .model import Base, Recording
 from .config import Config
 
 # enable hooks of Recording
-from . import worker
+from . import worker # noqa
 
 
 def query_task_status(response):
