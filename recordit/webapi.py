@@ -5,6 +5,7 @@ from eve_sqlalchemy import SQL
 from eve_sqlalchemy.validation import ValidatorSQL
 
 from .model import Base, Recording
+from .config import Config
 
 
 def query_task_status(response):
@@ -14,6 +15,8 @@ def query_task_status(response):
 
 
 def create_app():
+    cfg = Config()
+
     eve_settings = {
         'DEBUG': True,
 
@@ -26,7 +29,7 @@ def create_app():
         },
 
         # database
-        'SQLALCHEMY_DATABASE_URI': f'sqlite:///{os.getcwd()}/recordit.db',
+        'SQLALCHEMY_DATABASE_URI': cfg['DB'],
         # suggested by flask_sqlalchemy
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
 
